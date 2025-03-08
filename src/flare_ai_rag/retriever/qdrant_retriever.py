@@ -47,14 +47,13 @@ class QdrantRetriever(BaseRetriever):
         output = []
         for hit in results:
             if hit.payload:
+                if "text" not in hit.payload:
+                    continue
                 text = hit.payload.get("text", "")
                 metadata = {
                     field: value
                     for field, value in hit.payload.items()
                     if field != "text"
                 }
-            else:
-                text = ""
-                metadata = ""
-            output.append({"text": text, "score": hit.score, "metadata": metadata})
+                output.append({"text": text, "score": hit.score, "metadata": metadata})
         return output
