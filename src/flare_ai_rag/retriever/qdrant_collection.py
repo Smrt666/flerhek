@@ -43,6 +43,11 @@ def generate_collection(
         df_docs.iterrows(), start=1
     ):  # Using _ for unused variable
         content = row["content"]
+        logger.info(
+            "Processing document.",
+            filename=row["file_name"],
+            idx=idx,
+        )
 
         if not isinstance(content, str):
             logger.warning(

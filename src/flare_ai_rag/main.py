@@ -6,6 +6,7 @@ It sets up CORS middleware, loads configuration and data, and wires together the
 Gemini-based Router, Retriever, and Responder components into a chat endpoint.
 """
 
+from pathlib import Path
 import pandas as pd
 import structlog
 import uvicorn
@@ -22,6 +23,8 @@ from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_co
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
+
+from flare_ai_rag.utils.data_maker import make_data
 
 logger = structlog.get_logger(__name__)
 
@@ -126,9 +129,12 @@ def create_app() -> FastAPI:
     # Load input configuration.
     input_config = load_json(settings.input_path / "input_parameters.json")
 
+    # generate data
+    make_data(settings.data_path)
+
     # Load RAG data.
-    df_docs = pd.read_csv(settings.data_path / "docs.csv", delimiter=",")
-    logger.info("Loaded CSV Data.", num_rows=len(df_docs))
+    df_docs = pd.read_json(settings.data_path / "data.json")
+    logger.info("Loaded JSON Data.", num_rows=len(df_docs))
 
     # Set up the RAG components: 1. Gemini Provider
     base_ai, router_component = setup_router(input_config)
