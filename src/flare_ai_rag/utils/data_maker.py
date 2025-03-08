@@ -5,6 +5,7 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+
 def get_data(file: Path, base_path: Path) -> list[dict]:
     r = []
     extension = file.suffix
@@ -31,18 +32,24 @@ def get_data(file: Path, base_path: Path) -> list[dict]:
                     section_content = section.strip()
                 else:
                     section_content = section_content.strip()
-                
+
                 if section_content.startswith("<") and section_content.endswith(">"):
                     continue
-                
+
                 if r and len(r[-1]["content"]) + len(section_content) < 5000:
                     r[-1]["content"] += "\n\n" + section_content
                 else:
-                    r.append({"content": section_content, "file_name": file_name, "meta_data": meta_data})
+                    r.append({"content": section_content, "file_name": file_name,
+                             "meta_data": meta_data, "type": "answer"})
         else:
-            r.append({"content": content, "meta_data": meta_data, "file_name": file_name})   
+            r.append({"content": content, "meta_data": meta_data,
+                     "file_name": file_name, "type": "answer"})
+    elif extension in (".js", ".sol", ".py"):
+        r.append({"content": content, "meta_data": meta_data,
+                 "file_name": file_name, "type": "code"})
     else:
-        r.append({"content": content, "meta_data": meta_data, "file_name": file_name})
+        r.append({"content": content, "meta_data": meta_data,
+                 "file_name": file_name, "type": "answer"})
     rr = []
     for i in r:
         if len(i["content"]) < 30:

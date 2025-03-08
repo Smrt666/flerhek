@@ -57,11 +57,20 @@ def setup_retriever(
     # Set up Gemini Embedding client
     embedding_client = GeminiEmbedding(settings.gemini_api_key)
     # (Re)generate qdrant collection
+
     generate_collection(
         df_docs,
         qdrant_client,
         retriever_config,
         embedding_client=embedding_client,
+        collection_type="answer",
+    )
+    generate_collection(
+        df_docs,
+        qdrant_client,
+        retriever_config,
+        embedding_client=embedding_client,
+        collection_type="code",
     )
     logger.info(
         "The Qdrant collection has been generated.",
@@ -133,8 +142,11 @@ def create_app() -> FastAPI:
     make_data(settings.data_path)
 
     # Load RAG data.
-    df_docs = pd.read_json(settings.data_path / "data.json")
-    logger.info("Loaded JSON Data.", num_rows=len(df_docs))
+    docs_data = pd.read_json(settings.data_path / "data.json")
+    code_data = get_code_data(settings.data_path / "code.json")
+
+    data = pd.concat([docs_data, code_data], ignore_index=True)
+    logger.info("Loaded JSON Data.", num_rows=len(data))
 
     # Set up the RAG components: 1. Gemini Provider
     base_ai, router_component = setup_router(input_config)
@@ -143,7 +155,7 @@ def create_app() -> FastAPI:
     qdrant_client = setup_qdrant(input_config)
 
     # 2b. Set up the Retriever.
-    retriever_component = setup_retriever(qdrant_client, input_config, df_docs)
+    retriever_component = setup_retriever(qdrant_client, input_config, data)
 
     # 3. Set up the Responder.
     responder_component = setup_responder(input_config)

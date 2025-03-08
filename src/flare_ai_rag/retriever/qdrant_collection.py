@@ -29,19 +29,22 @@ def generate_collection(
     qdrant_client: QdrantClient,
     retriever_config: RetrieverConfig,
     embedding_client: GeminiEmbedding,
+    collection_type: str,
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     _create_collection(
-        qdrant_client, retriever_config.collection_name, retriever_config.vector_size
+        qdrant_client, retriever_config.collection_name + collection_type, retriever_config.vector_size
     )
     logger.info(
-        "Created the collection.", collection_name=retriever_config.collection_name
+        "Created the collection.", collection_name=retriever_config.collection_name + collection_type
     )
 
     points = []
     for idx, (_, row) in enumerate(
         df_docs.iterrows(), start=1
     ):  # Using _ for unused variable
+        if row["type"] != collection_type:
+            continue
         content = row["content"]
         logger.info(
             "Processing document.",
@@ -101,12 +104,12 @@ def generate_collection(
 
     if points:
         qdrant_client.upsert(
-            collection_name=retriever_config.collection_name,
+            collection_name=retriever_config.collection_name + collection_type,
             points=points,
         )
         logger.info(
             "Collection generated and documents inserted into Qdrant successfully.",
-            collection_name=retriever_config.collection_name,
+            collection_name=retriever_config.collection_name + collection_type,
             num_points=len(points),
         )
     else:
