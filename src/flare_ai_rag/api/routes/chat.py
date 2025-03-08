@@ -148,12 +148,12 @@ class ChatRouter:
 
         return await handler(message)
 
-    async def handle_rag_pipeline(self, _: str) -> dict[str, str]:
+    async def handle_rag_pipeline(self, message: str) -> dict[str, str]:
         """
         Handle attestation requests.
 
         Args:
-            _: Unused message parameter
+            message: Message parameter
 
         Returns:
             dict[str, str]: Response containing attestation request
@@ -165,15 +165,9 @@ class ChatRouter:
         )
         self.logger.info("Query classified", classification=classification)
 
-        if classification == "ANSWER":
-            # Step 2. Retrieve relevant documents.
-            retrieved_docs = self.retriever.semantic_search(_, top_k=5)
-            self.logger.info("Documents retrieved")
-
-            # Step 3. Generate the final answer.
-            answer = self.responder.generate_response(_, retrieved_docs)
-            self.logger.info("Response generated", answer=answer)
-            return {"classification": classification, "response": answer}
+        if not classification in ["ANSWER", "CODE", "CLARIFY", "REJECT"]:
+            self.logger.exception("RAG Routing failed")
+            raise ValueError(classification)
 
         # Map static responses for CLARIFY and REJECT.
         static_responses = {
@@ -187,8 +181,14 @@ class ChatRouter:
                 "response": static_responses[classification],
             }
 
-        self.logger.exception("RAG Routing failed")
-        raise ValueError(classification)
+        # Step 2. Retrieve relevant documents.
+        retrieved_docs = self.retriever.semantic_search(classification.lower(), message, top_k=5)
+        self.logger.info("Documents retrieved")
+
+        # Step 3. Generate the final answer.
+        answer = self.responder.generate_response(message, retrieved_docs)
+        self.logger.info("Response generated", answer=answer)
+        return {"classification": classification, "response": answer}
 
     async def handle_attestation(self, _: str) -> dict[str, str]:
         """

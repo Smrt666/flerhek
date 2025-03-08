@@ -25,6 +25,7 @@ from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
 
 from flare_ai_rag.utils.data_maker import make_data
+from flare_ai_rag.utils.code_data_reader import get_code_data
 
 logger = structlog.get_logger(__name__)
 
@@ -143,7 +144,7 @@ def create_app() -> FastAPI:
 
     # Load RAG data.
     docs_data = pd.read_json(settings.data_path / "data.json")
-    code_data = get_code_data(settings.data_path / "code.json")
+    code_data = pd.json_normalize(get_code_data(settings.data_path / "contracts.json"))
 
     data = pd.concat([docs_data, code_data], ignore_index=True)
     logger.info("Loaded JSON Data.", num_rows=len(data))

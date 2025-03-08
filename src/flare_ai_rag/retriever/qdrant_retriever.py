@@ -20,7 +20,7 @@ class QdrantRetriever(BaseRetriever):
         self.embedding_client = embedding_client
 
     @override
-    def semantic_search(self, query: str, top_k: int = 5) -> list[dict]:
+    def semantic_search(self, collection_type: str, query: str, top_k: int = 5) -> list[dict]:
         """
         Perform semantic search by converting the query into a vector
         and searching in Qdrant.
@@ -38,7 +38,7 @@ class QdrantRetriever(BaseRetriever):
 
         # Search Qdrant for similar vectors.
         results = self.client.search(
-            collection_name=self.retriever_config.collection_name,
+            collection_name=self.retriever_config.collection_name + collection_type,
             query_vector=query_vector,
             limit=top_k,
         )

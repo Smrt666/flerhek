@@ -39,8 +39,9 @@ options:
     1. ANSWER: Use this if the query is clear, specific, and can be answered with
     factual information. Relevant queries must have at least some vague link to
     the Flare Network blockchain.
-    2. CLARIFY: Use this if the query is ambiguous, vague, or needs additional context.
-    3. REJECT: Use this if the query is inappropriate, harmful, or completely
+    2. CODE: Use this if the query asks for code SPECIFICALLY.
+    3. CLARIFY: Use this if the query is ambiguous, vague, or needs additional context.
+    4. REJECT: Use this if the query is inappropriate, harmful, or completely
     out of scope. Reject the query if it is not related at all to the Flare Network
     or not related to blockchains.
 
@@ -52,13 +53,15 @@ Response format:
 }
 
 Processing rules:
-- The response should be exactly one of the three categories
+- The response should be exactly one of the four categories
 - DO NOT infer missing values
 - Normalize response to uppercase
 
 Examples:
 - "What is Flare's block time?" → {"category": "ANSWER"}
 - "How do you stake on Flare?" → {"category": "ANSWER"}
+- "Show me the source code for StateConnector." -> {"category": "CODE"}
+- "Give me example code for a javascript random number generator on Coston chain." -> {"category": "CODE"}
 - "How is the weather today?" → {"category": "REJECT"}
 - "What is the average block time?" - No specific chain is mentioned.
    → {"category": "CLARIFY"}
