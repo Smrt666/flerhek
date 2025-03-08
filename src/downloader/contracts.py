@@ -1,6 +1,4 @@
 import json
-import os
-import shutil
 import time
 
 import requests
@@ -49,8 +47,10 @@ def fetch_contract_data(address):
     response = requests.get(CONTRACT_SOURCE_URL.format(address))
 
     if response.status_code != 200:
-        print(f"Failed to fetch source for {address}, status code {response.status_code}")
-        return
+        print(
+            f"Failed to fetch source for {address}, status code {response.status_code}"
+        )
+        return None
 
     data = response.json()
 
