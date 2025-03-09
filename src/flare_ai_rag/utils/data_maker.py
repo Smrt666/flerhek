@@ -31,7 +31,7 @@ def get_data(file: Path, base_path: Path) -> list[dict]:
                 if i == 0 and not content.startswith("\n##"):
                     section_content = section.strip()
                 else:
-                    section_content = section_content.strip()
+                    section_content = section.strip()
 
                 if section_content.startswith("<") and section_content.endswith(">"):
                     continue
@@ -39,7 +39,8 @@ def get_data(file: Path, base_path: Path) -> list[dict]:
                 if r and len(r[-1]["content"]) + len(section_content) < 5000:
                     r[-1]["content"] += "\n\n" + section_content
                 else:
-                    r.append({"content": section_content, "file_name": file_name,
+                    section_content = meta_data.get("title", "") + "\n\n" + section_content
+                    r.append({"content": section_content.strip(), "file_name": file_name,
                              "meta_data": meta_data, "type": "answer"})
         else:
             r.append({"content": content, "meta_data": meta_data,
