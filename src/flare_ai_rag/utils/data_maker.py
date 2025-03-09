@@ -2,11 +2,13 @@ import yaml
 import json
 from pathlib import Path
 import structlog
+from flare_ai_rag.utils.splitter import data_split
 
 logger = structlog.get_logger(__name__)
 
 
-def get_data(file: Path, base_path: Path) -> list[dict]:
+def get_data(file: Path, base_path: Path, overlap: int = 1000) -> list[dict]:
+    chunk_size = 10 * overlap
     r = []
     extension = file.suffix
     content = file.read_text()
@@ -24,38 +26,27 @@ def get_data(file: Path, base_path: Path) -> list[dict]:
             content = content.strip()
             title = title.lstrip("# ")
             meta_data["title"] = title
-        if "\n## " in content:
-            for i, section in enumerate(content.split("\n## ")):
-                if not section:
-                    continue
-                if i == 0 and not content.startswith("\n##"):
-                    section_content = section.strip()
-                else:
-                    section_content = section.strip()
-
-                if section_content.startswith("<") and section_content.endswith(">"):
-                    continue
-
-                if r and len(r[-1]["content"]) + len(section_content) < 5000:
-                    r[-1]["content"] += "\n\n" + section_content
-                else:
-                    section_content = meta_data.get("title", "") + "\n\n" + section_content
-                    r.append({"content": section_content.strip(), "file_name": file_name,
-                             "meta_data": meta_data, "type": "answer"})
-        else:
-            r.append({"content": content, "meta_data": meta_data,
+        for section in data_split(content, ["\n# ", "\n## ", "\n### "], chunk_size, overlap):
+            r.append({"content": section, "meta_data": meta_data,
                      "file_name": file_name, "type": "answer"})
     elif extension in (".js", ".sol", ".py"):
-        r.append({"content": content, "meta_data": meta_data,
-                 "file_name": file_name, "type": "code"})
+        seps = {
+            ".js": ["\nfunction", "\nclass", "\nconst", "\nlet", "\nvar"],
+            ".sol": ["\ncontract", "\nfunction", "\nmodifier", "\nevent", "\nstruct"],
+            ".py": ["\ndef", "\nclass"]
+        }
+        for section in data_split(content, seps[extension], chunk_size, overlap):
+            r.append({"content": section, "meta_data": meta_data,
+                    "file_name": file_name, "type": "code"})
     else:
-        r.append({"content": content, "meta_data": meta_data,
-                 "file_name": file_name, "type": "answer"})
+        for section in data_split(content, [], chunk_size, overlap):
+            r.append({"content": content, "meta_data": meta_data,
+                    "file_name": file_name, "type": "answer"})
     rr = []
     for i in r:
         if len(i["content"]) < 30:
             continue
-        if len(i["content"]) > 10000:
+        if len(i["content"]) >= 20000:
             logger.warning(f"Content too long in file: {i['file_name']}")
             continue
         rr.append(i)
@@ -65,7 +56,7 @@ def get_data(file: Path, base_path: Path) -> list[dict]:
 def make_data(data_path: Path) -> None:
     logger.info("Reading data files...")
     data = []
-    for file in data_path.rglob("*"):
+    for file in data_path.glob("files/**/*"):
         if not file.is_file():
             continue
         logger.info(f"Reading file: {file.name}")
@@ -81,5 +72,4 @@ def make_data(data_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    path = input("Specify path to data.json parent folder: ")
-    make_data(Path(path))
+    make_data(Path(__file__).parent.parent.parent / "data")
