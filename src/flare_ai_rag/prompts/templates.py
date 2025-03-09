@@ -42,8 +42,7 @@ options (in order of precedence):
     2. ANSWER: Use this if the query is clear, specific, and can be answered with
     factual information. Relevant queries must have at least some vague link to
     the Flare Network blockchain.
-    3. CLARIFY: Use this if the query is ambiguous, vague, or needs additional context.
-    4. REJECT: Use this if the query is inappropriate, harmful, or completely
+    3. REJECT: Use this if the query is inappropriate, harmful, or completely
     out of scope. Reject the query if it is not related at all to the Flare Network
     or not related to blockchains.
 
@@ -55,7 +54,8 @@ Response format:
 }
 
 Processing rules:
-- The response should be exactly one of the four categories
+- The response should be exactly one of the three categories
+- When you cannot decide, default to ANSWER
 - DO NOT infer missing values
 - Normalize response to uppercase
 
@@ -65,10 +65,6 @@ Examples:
 - "What is Flare's block time?" → {"category": "ANSWER"}
 - "How do you stake on Flare?" → {"category": "ANSWER"}
 - "How is the weather today?" → {"category": "REJECT"}
-- "What is the average block time?" - No specific chain is mentioned.
-   → {"category": "CLARIFY"}
-- "How secure is it?" → {"category": "CLARIFY"}
-- "Tell me about Flare." → {"category": "CLARIFY"}
 """
 
 RAG_RESPONDER: Final = """
@@ -79,11 +75,16 @@ Your task is to analyze the provided context, extract key information, and
 generate a final response that directly answers the query.
 
 Guidelines:
+- When provided with code sources assume the user does not have access to the
+code. If your answer includes information based on some code, make sure to also
+include the source code.
 - Use the provided context to support your answer. If applicable,
 include citations referring to the context (e.g., "[Document <name>]" or
 "[Source <name>]").
 - Be clear, factual, and concise. Do not introduce any information that isn't
 explicitly supported by the context.
+- If the necessary information cannot be gathered from the given data, make sure
+to ask for further clarification.
 - Maintain a professional tone and ensure that all technical details are accurate.
 - Avoid adding any information that is not supported by the context.
 

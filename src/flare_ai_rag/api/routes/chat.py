@@ -167,20 +167,14 @@ class ChatRouter:
         )
         self.logger.info("Query classified", classification=classification)
 
-        if not classification in [ "CODE", "ANSWER", "CLARIFY", "REJECT"]:
+        if not classification in [ "CODE", "ANSWER", "REJECT"]:
             self.logger.exception("RAG Routing failed")
             raise ValueError(classification)
 
-        # Map static responses for CLARIFY and REJECT.
-        static_responses = {
-            "CLARIFY": "Please provide additional context.",
-            "REJECT": "The query is out of scope.",
-        }
-
-        if classification in static_responses:
+        if classification == "REJECT":
             return {
-                "classification": classification,
-                "response": static_responses[classification],
+                "classification": "REJECT",
+                "response": "The query is out of scope.",
             }
 
         # Step 2. Retrieve relevant documents.

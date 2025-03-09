@@ -12,7 +12,6 @@ class RouterConfig:
     model: Model
     code_option: str
     answer_option: str
-    clarify_option: str
     reject_option: str
 
     @staticmethod
@@ -30,6 +29,5 @@ class RouterConfig:
             model=model,
             code_option="CODE",
             answer_option="ANSWER",
-            clarify_option="CLARIFY",
             reject_option="REJECT",
         )

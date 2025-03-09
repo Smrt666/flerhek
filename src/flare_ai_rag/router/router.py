@@ -54,11 +54,10 @@ class GeminiRouter(BaseQueryRouter):
         valid_options = {
             self.router_config.code_option,
             self.router_config.answer_option,
-            self.router_config.clarify_option,
             self.router_config.reject_option,
         }
         if classification not in valid_options:
-            classification = self.router_config.clarify_option
+            classification = self.router_config.answer_option
 
         return classification
 
@@ -116,10 +115,9 @@ class QueryRouter(BaseQueryRouter):
         valid_options = {
             self.router_config.code_option,
             self.router_config.answer_option,
-            self.router_config.clarify_option,
             self.router_config.reject_option,
         }
         if classification not in valid_options:
-            classification = self.router_config.clarify_option
+            classification = self.router_config.answer_option
 
         return classification
