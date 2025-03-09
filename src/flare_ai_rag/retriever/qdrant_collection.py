@@ -72,7 +72,7 @@ def generate_collection(
             if "400 Request payload size exceeds the limit" in str(e):
                 logger.warning(
                     "Skipping document due to size limit.",
-                    filename=row["file_name"],
+                    filename=row["file_name"], size=len(content),
                 )
                 continue
             # Log the full traceback for other InvalidArgument errors
