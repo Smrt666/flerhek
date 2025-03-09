@@ -29,21 +29,18 @@ class GeminiResponder(BaseResponder):
         :param retrieved_documents: A list of dictionaries containing retrieved docs.
         :return: The generated answer as a string.
         """
-        context = "<system>List of retrieved documents:</system>\n"
+        prompt = "<system>List of retrieved documents:</system>\n\n"
 
         # Build context from the retrieved documents.
         for idx, doc in enumerate(retrieved_documents, start=1):
-            identifier = doc.get("metadata", {}).get("filename", f"Doc{idx}")
-            context += f"Document {identifier}:\n{doc.get('text', '')}\n\n"
+            identifier = doc.get("metadata", {}).get("filename", f"Document{idx}")
+            prompt += f"Document {identifier}:\n\n{doc.get('text', '')}\n\n"
 
-        # Compose the prompt
-        prompt = context
-        prompt += "<system>List of previous user queries:</query>\n"
-        prompt += "\n".join(history) + "\n\n"
-        prompt += (
-            f"<system>Current user query:</system>\n{query}\n"
-            + self.responder_config.query_prompt
-        )
+        # Compose the prompt.
+        prompt += "<system>List of previous user queries:</query>\n\n"
+        prompt += "\n".join(f"- {question}" for question in history) + "\n\n"
+        prompt += f"<system>The current user query:</system>\n\n{query}\n\n"
+        prompt += f"<system>{self.responder_config.query_prompt}</system>"
 
         # Use the generate method of GeminiProvider to obtain a response.
         response = self.client.generate(

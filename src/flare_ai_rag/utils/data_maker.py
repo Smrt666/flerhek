@@ -1,9 +1,11 @@
-import yaml
 import json
 from pathlib import Path
+
 import structlog
-from flare_ai_rag.utils.splitter import data_split
+import yaml
+
 from flare_ai_rag.utils.source_manager import read_settings
+from flare_ai_rag.utils.splitter import data_split
 
 logger = structlog.get_logger(__name__)
 
@@ -126,7 +128,9 @@ def make_data(data_path: Path) -> None:
                     try:
                         data.extend(get_data(file, data_path))
                     except Exception:
-                        logger.exception(f"Error reading document. filename={file.name}")
+                        logger.exception(
+                            f"Error reading document. filename={file.name}"
+                        )
                         continue
 
     with open(data_path / "data.json", "w") as f:

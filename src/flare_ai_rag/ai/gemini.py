@@ -16,7 +16,7 @@ from google.generativeai.embedding import (
 from google.generativeai.embedding import (
     embed_content as _embed_content,
 )
-from google.generativeai.generative_models import ChatSession, GenerativeModel
+from google.generativeai.generative_models import GenerativeModel
 from google.generativeai.types import GenerationConfig
 
 from flare_ai_rag.ai.base import BaseAIProvider, ModelResponse

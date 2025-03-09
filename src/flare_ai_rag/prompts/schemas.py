@@ -58,12 +58,14 @@ class PromptInputs(TypedDict, total=False):
 
     Attributes:
         user_input (str): Raw user input text
+        user_history (str): Previous user input texts
         text (str): Processed or formatted text
         content (str): General content string
         code (str): Code snippet or related content
     """
 
     user_input: str
+    user_history: str
     text: str
     content: str
     code: str

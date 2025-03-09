@@ -6,7 +6,6 @@ It sets up CORS middleware, loads configuration and data, and wires together the
 Gemini-based Router, Retriever, and Responder components into a chat endpoint.
 """
 
-from pathlib import Path
 import pandas as pd
 import structlog
 import uvicorn
@@ -23,9 +22,8 @@ from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_co
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
-
-from flare_ai_rag.utils.data_maker import make_data
 from flare_ai_rag.utils.code_data_reader import get_code_data
+from flare_ai_rag.utils.data_maker import make_data
 from flare_ai_rag.utils.source_manager import update_sources
 
 logger = structlog.get_logger(__name__)

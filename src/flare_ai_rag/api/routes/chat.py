@@ -103,11 +103,12 @@ class ChatRouter:
                     return {"response": resp}
 
                 route = await self.get_semantic_route(message.message, user_id, history)
+                self.logger.info("Query routed", route=route)
                 response = await self.route_message(
                     route, message.message, user_id, history
                 )
 
-                self.histories[user_id] = history[-6:] + [message.message]
+                self.histories[user_id] = history[-20:] + [message.message]
 
                 return response
 
@@ -135,12 +136,9 @@ class ChatRouter:
             SemanticRouterResponse: Determined route for the message
         """
         try:
-            user_input = "List of previous user queries:\n"
-            user_input += "\n".join(history) + "\n\n"
-            user_input += f"Current user query:\n{message}\n"
-
+            formatted_history = "\n".join(f"- {question}" for question in history)
             prompt, mime_type, schema = self.prompts.get_formatted_prompt(
-                "semantic_router", user_input=user_input
+                "semantic_router", user_input=message, user_history=formatted_history
             )
             route_response = self.ai.generate(
                 prompt=prompt, response_mime_type=mime_type, response_schema=schema
@@ -196,18 +194,16 @@ class ChatRouter:
             dict[str, str]: Response containing attestation request
         """
         # Step 1. Classify the user query.
-        user_input = "List of previous user queries:\n"
-        user_input += "\n".join(history) + "\n\n"
-        user_input += f"Current user query:\n{message}\n"
+        formatted_history = "\n".join(f"- {question}" for question in history)
         prompt, mime_type, schema = self.prompts.get_formatted_prompt(
-            "rag_router", user_input=user_input
+            "rag_router", user_input=message, user_history=formatted_history
         )
         classification = self.query_router.route_query(
             prompt=prompt, response_mime_type=mime_type, response_schema=schema
         )
         self.logger.info("Query classified", classification=classification)
 
-        if not classification in ["CODE", "ANSWER", "REJECT"]:
+        if classification not in ["CODE", "ANSWER", "REJECT"]:
             self.logger.exception("RAG Routing failed")
             raise ValueError(classification)
 
@@ -220,9 +216,10 @@ class ChatRouter:
         classification_type = classification.lower()
         other_type = "code" if classification_type == "answer" else "answer"
 
+        # Step 2. Construct query for RAG
         query = "\n\n".join(history) + "\n\n" + message
 
-        # Step 2. Retrieve relevant documents.
+        # Step 3. Retrieve relevant documents.
         retrieved_docs = self.retriever.semantic_search(
             classification_type, query, top_k=5
         )
@@ -232,7 +229,7 @@ class ChatRouter:
         documents = retrieved_docs + retrieved_docs_other
         self.logger.info("Documents retrieved", documents=documents)
 
-        # Step 3. Generate the final answer.
+        # Step 4. Generate the final answer.
         answer = self.responder.generate_response(message, history, documents)
         self.logger.info("Response generated", answer=answer)
         return {"classification": classification, "response": answer}

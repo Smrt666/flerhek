@@ -1,14 +1,16 @@
-import git
-from pathlib import Path
-import structlog
 import json
+from pathlib import Path
+
+import git
+import structlog
 
 logger = structlog.get_logger(__name__)
 loc = Path(__file__).parent
 data_files = loc.parent.parent / "data" / "files"
 
+
 def read_settings():
-    with open(data_files / "sources.json", "r") as f:
+    with open(data_files / "sources.json") as f:
         return json.load(f)
 
 

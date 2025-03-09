@@ -1,18 +1,19 @@
-from pathlib import Path
-from flare_ai_rag.utils.splitter import data_split
 import json
+from pathlib import Path
+
+from flare_ai_rag.utils.splitter import data_split
 
 
 def get_code_data(file: Path, overlap: int = 900) -> list[dict]:
     chunk_size = 10 * overlap
-    with open(file, "r") as f:
+    with open(file) as f:
         code = json.load(f)
 
     r = []
     for item in code:
         if len(r) > 50:  # TODO: Remove this
             break
-        if not "SourceCode" in item:
+        if "SourceCode" not in item:
             continue
         content = item["SourceCode"]
         metadata = {}
