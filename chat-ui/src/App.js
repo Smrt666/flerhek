@@ -34,6 +34,7 @@ const ChatInterface = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ message: text }),
+        credentials: 'include',
       });
 
       if (!response.ok) {

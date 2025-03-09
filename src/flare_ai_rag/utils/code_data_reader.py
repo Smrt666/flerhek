@@ -28,7 +28,18 @@ def get_code_data(file: Path, overlap: int = 900) -> list[dict]:
 
         if not metadata.get("file_name"):
             continue
-        for section in data_split(content, ["\ncontract", "\nfunction", "\nmodifier", "\nevent", "\nstruct"], chunk_size, overlap):
-            r.append({"content": section, "metadata": metadata,
-                      "file_name": metadata["file_name"], "type": "code"})
+        for section in data_split(
+            content,
+            ["\ncontract", "\nfunction", "\nmodifier", "\nevent", "\nstruct"],
+            chunk_size,
+            overlap,
+        ):
+            r.append(
+                {
+                    "content": section,
+                    "metadata": metadata,
+                    "file_name": metadata["file_name"],
+                    "type": "code",
+                }
+            )
     return r

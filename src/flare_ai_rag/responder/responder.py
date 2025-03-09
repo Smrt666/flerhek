@@ -19,7 +19,9 @@ class GeminiResponder(BaseResponder):
         self.responder_config = responder_config
 
     @override
-    def generate_response(self, query: str, history: list[str], retrieved_documents: list[dict]) -> str:
+    def generate_response(
+        self, query: str, history: list[str], retrieved_documents: list[dict]
+    ) -> str:
         """
         Generate a final answer using the query and the retrieved context.
 
@@ -38,7 +40,10 @@ class GeminiResponder(BaseResponder):
         prompt = context
         prompt += "<system>List of previous user queries:</query>\n"
         prompt += "\n".join(history) + "\n\n"
-        prompt += f"<system>Current user query:</system>\n{query}\n" + self.responder_config.query_prompt
+        prompt += (
+            f"<system>Current user query:</system>\n{query}\n"
+            + self.responder_config.query_prompt
+        )
 
         # Use the generate method of GeminiProvider to obtain a response.
         response = self.client.generate(

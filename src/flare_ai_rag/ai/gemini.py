@@ -64,35 +64,32 @@ class GeminiProvider(BaseAIProvider):
                 - system_instruction: Custom system prompt for the AI personality
         """
         configure(api_key=api_key)
-        self.chat: ChatSession | None = None
         self.model = GenerativeModel(
             model_name=model,
             system_instruction=kwargs.get("system_instruction", SYSTEM_INSTRUCTION),
         )
-        self.chat_history = []
+        self.chat_sessions = {}
         self.logger = logger.bind(service="gemini")
 
     @override
-    def reset(self) -> None:
+    def reset(self, user_id: str) -> None:
         """
         Reset the provider state.
 
         Clears chat history and terminates active chat session.
         """
-        self.chat_history = []
-        self.chat = None
-        self.logger.debug(
-            "reset_gemini", chat=self.chat, chat_history=self.chat_history
-        )
+        self.chat_sessions[user_id] = {"chat_history": [], "chat": None}
+        self.logger.debug("reset_gemini", user_id=user_id)
 
     @override
-    def reset_model(self, model: str, **kwargs: str) -> None:
+    def reset_model(self, model: str, user_id: str, **kwargs: str) -> None:
         """
         Completely reinitialize the generative model with new parameters,
         and reset the chat session and history.
 
         Args:
             model (str): New model identifier.
+            user_id: The user ID.
             **kwargs: Additional configuration parameters, e.g.:
                 system_instruction: new system prompt.
         """
@@ -103,8 +100,10 @@ class GeminiProvider(BaseAIProvider):
             system_instruction=new_system_instruction,
         )
         # Reset chat session and history with the new system instruction.
-        self.chat = None
-        self.chat_history = [{"role": "system", "content": new_system_instruction}]
+        self.chat_sessions[user_id] = {
+            "chat_history": [],
+            "chat": None,
+        }
         self.logger.debug(
             "reset_model", model=model, system_instruction=new_system_instruction
         )
@@ -152,6 +151,7 @@ class GeminiProvider(BaseAIProvider):
     def send_message(
         self,
         msg: str,
+        user_id: str,
     ) -> ModelResponse:
         """
         Send a message in a chat session and get the response.
@@ -160,6 +160,7 @@ class GeminiProvider(BaseAIProvider):
 
         Args:
             msg (str): Message to send to the chat session
+            user_id: The user ID
 
         Returns:
             ModelResponse: Response from the chat session including:
@@ -169,10 +170,19 @@ class GeminiProvider(BaseAIProvider):
                     - candidate_count: Number of generated candidates
                     - prompt_feedback: Feedback on the input message
         """
-        if not self.chat:
-            self.chat = self.model.start_chat(history=self.chat_history)
-        response = self.chat.send_message(msg)
-        self.logger.debug("send_message", msg=msg, response_text=response.text)
+        if user_id not in self.chat_sessions:
+            self.chat_sessions[user_id] = {
+                "chat_history": [],
+                "chat": None,
+            }
+        if not self.chat_sessions[user_id]["chat"]:
+            self.chat_sessions[user_id]["chat"] = self.model.start_chat(
+                history=self.chat_sessions[user_id]["chat_history"]
+            )
+        response = self.chat_sessions[user_id]["chat"].send_message(msg)
+        self.logger.debug(
+            "send_message", msg=msg, response_text=response.text, user_id=user_id
+        )
         return ModelResponse(
             text=response.text,
             raw_response=response,

@@ -1,5 +1,7 @@
+import uuid
+
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
 from flare_ai_rag.ai import GeminiProvider
@@ -63,7 +65,7 @@ class ChatRouter:
         self.responder = responder
         self.attestation = attestation
         self.prompts = prompts
-        self.history = []
+        self.histories = {}
         self.logger = logger.bind(router="chat")
         self._setup_routes()
 
@@ -73,11 +75,21 @@ class ChatRouter:
         """
 
         @self._router.post("/")
-        async def chat(message: ChatMessage) -> dict[str, str] | None:  # pyright: ignore [reportUnusedFunction]
+        async def chat(
+            request: Request, response: Response, message: ChatMessage
+        ) -> dict[str, str] | None:  # pyright: ignore [reportUnusedFunction]
             """
             Process a chat message through the RAG pipeline.
             Returns a response containing the query classification and the answer.
             """
+
+            user_id = request.cookies.get("user_id")
+            if not user_id:
+                user_id = str(uuid.uuid4())
+                response.set_cookie(key="user_id", value=user_id)
+
+            history = self.histories.get(user_id, [])
+
             try:
                 self.logger.debug("Received chat message", message=message.message)
 
@@ -90,11 +102,12 @@ class ChatRouter:
                     self.attestation.attestation_requested = False
                     return {"response": resp}
 
-                route = await self.get_semantic_route(message.message)
-                response = await self.route_message(route, message.message)
+                route = await self.get_semantic_route(message.message, user_id, history)
+                response = await self.route_message(
+                    route, message.message, user_id, history
+                )
 
-                self.history.append(message.message)
-                self.history = self.history[-5:]
+                self.histories[user_id] = history[-6:] + [message.message]
 
                 return response
 
@@ -107,19 +120,23 @@ class ChatRouter:
         """Return the underlying FastAPI router with registered endpoints."""
         return self._router
 
-    async def get_semantic_route(self, message: str) -> SemanticRouterResponse:
+    async def get_semantic_route(
+        self, message: str, user_id: str, history: list[str]
+    ) -> SemanticRouterResponse:
         """
         Determine the semantic route for a message using AI provider.
 
         Args:
             message: Message to route
+            user_id: The user ID
+            history: Chat history
 
         Returns:
             SemanticRouterResponse: Determined route for the message
         """
         try:
             user_input = "List of previous user queries:\n"
-            user_input += "\n".join(self.history) + "\n\n"
+            user_input += "\n".join(history) + "\n\n"
             user_input += f"Current user query:\n{message}\n"
 
             prompt, mime_type, schema = self.prompts.get_formatted_prompt(
@@ -134,7 +151,11 @@ class ChatRouter:
             return SemanticRouterResponse.CONVERSATIONAL
 
     async def route_message(
-        self, route: SemanticRouterResponse, message: str
+        self,
+        route: SemanticRouterResponse,
+        message: str,
+        user_id: str,
+        history: list[str],
     ) -> dict[str, str]:
         """
         Route a message to the appropriate handler based on semantic route.
@@ -142,6 +163,8 @@ class ChatRouter:
         Args:
             route: Determined semantic route
             message: Original message to handle
+            user_id: The user ID
+            history: Chat history
 
         Returns:
             dict[str, str]: Response from the appropriate handler
@@ -156,21 +179,25 @@ class ChatRouter:
         if not handler:
             return {"response": "Unsupported route"}
 
-        return await handler(message)
+        return await handler(message, user_id, history)
 
-    async def handle_rag_pipeline(self, message: str) -> dict[str, str]:
+    async def handle_rag_pipeline(
+        self, message: str, user_id: str, history: list[str]
+    ) -> dict[str, str]:
         """
         Handle attestation requests.
 
         Args:
             message: Message parameter
+            user_id: The user ID
+            history: Chat history
 
         Returns:
             dict[str, str]: Response containing attestation request
         """
         # Step 1. Classify the user query.
         user_input = "List of previous user queries:\n"
-        user_input += "\n".join(self.history) + "\n\n"
+        user_input += "\n".join(history) + "\n\n"
         user_input += f"Current user query:\n{message}\n"
         prompt, mime_type, schema = self.prompts.get_formatted_prompt(
             "rag_router", user_input=user_input
@@ -193,25 +220,31 @@ class ChatRouter:
         classification_type = classification.lower()
         other_type = "code" if classification_type == "answer" else "answer"
 
-        query = "\n\n".join(self.history) + "\n\n" + message
+        query = "\n\n".join(history) + "\n\n" + message
 
         # Step 2. Retrieve relevant documents.
-        retrieved_docs = self.retriever.semantic_search(classification_type, query, top_k=5)
-        retrieved_docs_other = self.retriever.semantic_search(other_type, query, top_k=2)
+        retrieved_docs = self.retriever.semantic_search(
+            classification_type, query, top_k=5
+        )
+        retrieved_docs_other = self.retriever.semantic_search(
+            other_type, query, top_k=2
+        )
         documents = retrieved_docs + retrieved_docs_other
         self.logger.info("Documents retrieved", documents=documents)
 
         # Step 3. Generate the final answer.
-        answer = self.responder.generate_response(message, self.history, documents)
+        answer = self.responder.generate_response(message, history, documents)
         self.logger.info("Response generated", answer=answer)
         return {"classification": classification, "response": answer}
 
-    async def handle_attestation(self, _: str) -> dict[str, str]:
+    async def handle_attestation(self, _: str, __: str, ___: str) -> dict[str, str]:
         """
         Handle attestation requests.
 
         Args:
             _: Unused message parameter
+            __: Unused user ID parameter
+            ___: Unused chat history parameter
 
         Returns:
             dict[str, str]: Response containing attestation request
@@ -221,15 +254,19 @@ class ChatRouter:
         self.attestation.attestation_requested = True
         return {"response": request_attestation_response.text}
 
-    async def handle_conversation(self, message: str) -> dict[str, str]:
+    async def handle_conversation(
+        self, message: str, user_id: str, _: list[str]
+    ) -> dict[str, str]:
         """
         Handle general conversation messages.
 
         Args:
             message: Message to process
+            user_id: The user ID
+            _: Unused chat history parameter
 
         Returns:
             dict[str, str]: Response from AI provider
         """
-        response = self.ai.send_message(message)
+        response = self.ai.send_message(message, user_id)
         return {"response": response.text}

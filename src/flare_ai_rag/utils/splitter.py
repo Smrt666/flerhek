@@ -1,4 +1,6 @@
-def data_split(content: str, seps: list[str], chunk_size: int = 10000, overlap: int = 1000) -> list[str]:
+def data_split(
+    content: str, seps: list[str], chunk_size: int = 10000, overlap: int = 1000
+) -> list[str]:
     """
     Split the content into chunks of max_chunk_size with overlap. If overlap is too large compared to max_chunk_size
     then expect wierd results."""
@@ -28,4 +30,3 @@ def data_split(content: str, seps: list[str], chunk_size: int = 10000, overlap: 
             i = jj
     r.append(content[i:].strip())
     return r
-

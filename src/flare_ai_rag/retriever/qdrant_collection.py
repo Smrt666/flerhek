@@ -33,10 +33,13 @@ def generate_collection(
 ) -> None:
     """Routine for generating a Qdrant collection for a specific CSV file type."""
     _create_collection(
-        qdrant_client, retriever_config.collection_name + collection_type, retriever_config.vector_size
+        qdrant_client,
+        retriever_config.collection_name + collection_type,
+        retriever_config.vector_size,
     )
     logger.info(
-        "Created the collection.", collection_name=retriever_config.collection_name + collection_type
+        "Created the collection.",
+        collection_name=retriever_config.collection_name + collection_type,
     )
 
     points = []
@@ -72,7 +75,8 @@ def generate_collection(
             if "400 Request payload size exceeds the limit" in str(e):
                 logger.warning(
                     "Skipping document due to size limit.",
-                    filename=row["file_name"], size=len(content),
+                    filename=row["file_name"],
+                    size=len(content),
                 )
                 continue
             # Log the full traceback for other InvalidArgument errors

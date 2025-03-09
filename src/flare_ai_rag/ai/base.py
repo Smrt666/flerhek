@@ -40,11 +40,11 @@ class BaseAIProvider(ABC):
         self.chat_history: list[Any] = []
 
     @abstractmethod
-    def reset(self) -> None:
+    def reset(self, user_id: str) -> None:
         """Reset the conversation history"""
 
     @abstractmethod
-    def reset_model(self, model: str, **kwargs: str) -> None:
+    def reset_model(self, model: str, user_id: str, **kwargs: str) -> None:
         """Completely reinitialize the generative model with new parameters,
         and reset the chat session and history."""
 
@@ -68,11 +68,12 @@ class BaseAIProvider(ABC):
         """
 
     @abstractmethod
-    def send_message(self, msg: str) -> ModelResponse:
+    def send_message(self, msg: str, user_id: str) -> ModelResponse:
         """Send a message in a conversational context
 
         Args:
             msg: Input message text
+            user_id: The user ID
 
         Returns:
             ModelResponse containing the response text and metadata
