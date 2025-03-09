@@ -72,18 +72,20 @@ def main():
 
     print(f"Found {len(addresses)} contracts")
 
-    contracts = []
+    contracts = {}
 
     for address in addresses:
         print(f"Fetching source for contract at {address}...")
         data = fetch_contract_data(address)
         if data:
-            contracts.append(data)
+            contracts[data["FileName"]] = data
 
         time.sleep(RATE_LIMIT)
 
+    print(f"Downloaded {len(contracts)} contracts")
+
     with open(DATA_FILE, "w", encoding="utf-8") as file:
-        json.dump(contracts, file, indent=4)
+        json.dump(list(contracts.values()), file, indent=4)
 
 
 if __name__ == "__main__":
