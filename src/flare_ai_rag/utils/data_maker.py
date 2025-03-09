@@ -29,7 +29,7 @@ def metadatadize(func):
 
 
 @metadatadize
-def get_data(file: Path, base_path: Path, overlap: int = 1000) -> list[dict]:
+def get_data(file: Path, base_path: Path, overlap: int = 900) -> list[dict]:
     chunk_size = 10 * overlap
     r = []
     extension = file.suffix
