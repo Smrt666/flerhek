@@ -43,7 +43,7 @@ class GeminiRouter(BaseQueryRouter):
             response_mime_type=response_mime_type,
             response_schema=response_schema,
         )
-        logger.debug("Generated respose from query router...", response=response)
+        logger.debug("Generated response from query router...", response=response)
         # Parse the response to extract classification.
         classification = (
             parse_gemini_response_as_json(response.raw_response)

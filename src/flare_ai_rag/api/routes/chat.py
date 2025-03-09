@@ -63,6 +63,7 @@ class ChatRouter:
         self.responder = responder
         self.attestation = attestation
         self.prompts = prompts
+        self.history = []
         self.logger = logger.bind(router="chat")
         self._setup_routes()
 
@@ -85,12 +86,17 @@ class ChatRouter:
                     try:
                         resp = self.attestation.get_token([message.message])
                     except VtpmAttestationError as e:
-                        resp = f"The attestation failed with  error:\n{e.args[0]}"
+                        resp = f"The attestation failed with error:\n{e.args[0]}"
                     self.attestation.attestation_requested = False
                     return {"response": resp}
 
                 route = await self.get_semantic_route(message.message)
-                return await self.route_message(route, message.message)
+                response = await self.route_message(route, message.message)
+
+                self.history.append(message.message)
+                self.history = self.history[-5:]
+
+                return response
 
             except Exception as e:
                 self.logger.exception("Chat processing failed", error=str(e))
@@ -112,8 +118,12 @@ class ChatRouter:
             SemanticRouterResponse: Determined route for the message
         """
         try:
+            user_input = "List of previous user queries:\n"
+            user_input += "\n".join(self.history) + "\n\n"
+            user_input += f"Current user query:\n{message}\n"
+
             prompt, mime_type, schema = self.prompts.get_formatted_prompt(
-                "semantic_router", user_input=message
+                "semantic_router", user_input=user_input
             )
             route_response = self.ai.generate(
                 prompt=prompt, response_mime_type=mime_type, response_schema=schema
@@ -159,15 +169,18 @@ class ChatRouter:
             dict[str, str]: Response containing attestation request
         """
         # Step 1. Classify the user query.
+        user_input = "List of previous user queries:\n"
+        user_input += "\n".join(self.history) + "\n\n"
+        user_input += f"Current user query:\n{message}\n"
         prompt, mime_type, schema = self.prompts.get_formatted_prompt(
-            "rag_router", user_input=message
+            "rag_router", user_input=user_input
         )
         classification = self.query_router.route_query(
             prompt=prompt, response_mime_type=mime_type, response_schema=schema
         )
         self.logger.info("Query classified", classification=classification)
 
-        if not classification in [ "CODE", "ANSWER", "REJECT"]:
+        if not classification in ["CODE", "ANSWER", "REJECT"]:
             self.logger.exception("RAG Routing failed")
             raise ValueError(classification)
 
@@ -180,14 +193,16 @@ class ChatRouter:
         classification_type = classification.lower()
         other_type = "code" if classification_type == "answer" else "answer"
 
+        query = "\n\n".join(self.history) + "\n\n" + message
+
         # Step 2. Retrieve relevant documents.
-        retrieved_docs = self.retriever.semantic_search(classification_type, message, top_k=5)
-        retrieved_docs_other = self.retriever.semantic_search(other_type, message, top_k=2)
+        retrieved_docs = self.retriever.semantic_search(classification_type, query, top_k=5)
+        retrieved_docs_other = self.retriever.semantic_search(other_type, query, top_k=2)
         documents = retrieved_docs + retrieved_docs_other
         self.logger.info("Documents retrieved", documents=documents)
 
         # Step 3. Generate the final answer.
-        answer = self.responder.generate_response(message, documents)
+        answer = self.responder.generate_response(message, self.history, documents)
         self.logger.info("Response generated", answer=answer)
         return {"classification": classification, "response": answer}
 
