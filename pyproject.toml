@@ -19,6 +19,7 @@ dependencies = [
     "structlog>=25.1.0",
     "uvicorn>=0.34.0",
     "pyyaml>=6.0.2",
+    "gitpython>=3.1.44",
 ]
 
 [dependency-groups]
@@ -57,15 +58,12 @@ deprecateTypingAliases = true
 disableBytesTypePromotions = true
 reportUnusedClass = true
 reportUnusedFunction = true
-reportUntypedFunctionDecorator = true
-reportUntypedClassDecorator = true
 reportPrivateUsage = true
 reportTypeCommentUsage = true
 reportConstantRedefinition = true
 reportDeprecated = true
 reportInconsistentConstructor = true
 reportUninitializedInstanceVariable = true
-reportMissingParameterType = true
 reportCallInDefaultInitializer = true
 reportUnnecessaryIsInstance = true
 reportUnnecessaryCast = true

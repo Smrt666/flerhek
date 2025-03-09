@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import structlog
 from flare_ai_rag.utils.splitter import data_split
+from flare_ai_rag.utils.source_manager import read_settings
 
 logger = structlog.get_logger(__name__)
 
@@ -74,6 +75,7 @@ def get_data(file: Path, base_path: Path, overlap: int = 900) -> list[dict]:
         seps = {
             ".js": ["\nfunction", "\nclass", "\nconst", "\nlet", "\nvar"],
             ".sol": ["\ncontract", "\nfunction", "\nmodifier", "\nevent", "\nstruct"],
+            ".rs": ["\nfn", "\nstruct", "\nimpl", "\nmod"],
             ".py": ["\ndef", "\nclass"],
         }
         for section in data_split(content, seps[extension], chunk_size, overlap):
@@ -111,16 +113,21 @@ def get_data(file: Path, base_path: Path, overlap: int = 900) -> list[dict]:
 def make_data(data_path: Path) -> None:
     logger.info("Reading data files...")
     data = []
-    for file in data_path.glob("files/**/*"):
-        if not file.is_file():
-            continue
-
-        logger.info(f"Reading file: {file.name}")
-        try:
-            data.extend(get_data(file, data_path))
-        except Exception:
-            logger.exception(f"Error reading document. filename={file.name}")
-            continue
+    settings = read_settings()
+    for source in settings:
+        source_path = data_path / "files" / source["name"]
+        for entry_point in source.get("entry_points", []):
+            path = source_path / entry_point
+            for incl in source.get("include", []):
+                for file in path.rglob(incl):
+                    if not file.is_file():
+                        continue
+                    logger.info(f"Reading file: {file.name}")
+                    try:
+                        data.extend(get_data(file, data_path))
+                    except Exception:
+                        logger.exception(f"Error reading document. filename={file.name}")
+                        continue
 
     with open(data_path / "data.json", "w") as f:
         json.dump(data, f, indent=2)

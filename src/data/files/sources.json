@@ -1,0 +1,32 @@
+[
+    {
+        "url": "https://github.com/flare-foundation/developer-hub.git",
+        "name": "developer-hub",
+        "entry_points": [
+            "docs"
+        ],
+        "include": [
+            "*.md",
+            "*.mdx",
+            "*.rst",
+            "*.py",
+            "*.sol",
+            "*.js"
+        ]
+    },
+    {
+        "url": "https://github.com/flare-foundation/docs.git",
+        "name": "flare-foundation",
+        "entry_points": [
+            "docs"
+        ],
+        "include": [
+            "*.md",
+            "*.mdx",
+            "*.rst",
+            "*.py",
+            "*.sol",
+            "*.js"
+        ]
+    }
+]

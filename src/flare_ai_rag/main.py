@@ -26,6 +26,7 @@ from flare_ai_rag.utils import load_json
 
 from flare_ai_rag.utils.data_maker import make_data
 from flare_ai_rag.utils.code_data_reader import get_code_data
+from flare_ai_rag.utils.source_manager import update_sources
 
 logger = structlog.get_logger(__name__)
 
@@ -140,6 +141,7 @@ def create_app() -> FastAPI:
     input_config = load_json(settings.input_path / "input_parameters.json")
 
     # generate data
+    update_sources()
     make_data(settings.data_path)
 
     # Load RAG data.

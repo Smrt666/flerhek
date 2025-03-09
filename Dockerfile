@@ -24,6 +24,7 @@ RUN apt-get update && \
     curl \
     nginx \
     supervisor \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
