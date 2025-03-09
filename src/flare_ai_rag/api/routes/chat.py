@@ -177,12 +177,17 @@ class ChatRouter:
                 "response": "The query is out of scope.",
             }
 
+        classification_type = classification.lower()
+        other_type = "code" if classification_type == "answer" else "answer"
+
         # Step 2. Retrieve relevant documents.
-        retrieved_docs = self.retriever.semantic_search(classification.lower(), message, top_k=5)
-        self.logger.info("Documents retrieved")
+        retrieved_docs = self.retriever.semantic_search(classification_type, message, top_k=5)
+        retrieved_docs_other = self.retriever.semantic_search(other_type, message, top_k=2)
+        documents = retrieved_docs + retrieved_docs_other
+        self.logger.info("Documents retrieved", documents=documents)
 
         # Step 3. Generate the final answer.
-        answer = self.responder.generate_response(message, retrieved_docs)
+        answer = self.responder.generate_response(message, documents)
         self.logger.info("Response generated", answer=answer)
         return {"classification": classification, "response": answer}
 

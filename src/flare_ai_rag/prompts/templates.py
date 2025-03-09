@@ -34,7 +34,7 @@ Instructions:
 
 RAG_ROUTER: Final = """
 Analyze the query provided and classify it into EXACTLY ONE category from the following
-options (in order of precedence):
+options:
 
     1. CODE: Use this if the query is clear, specific, can be answered with
     factual information, and the query SPECIFICALLY asks for code. Relevant queries
@@ -78,6 +78,8 @@ Guidelines:
 - When provided with code sources assume the user does not have access to the
 code. If your answer includes information based on some code, make sure to also
 include the source code.
+- If you find any relevant examples of use cases based on the user's query provide
+code examples to better explain your answer.
 - Use the provided context to support your answer. If applicable,
 include citations referring to the context (e.g., "[Document <name>]" or
 "[Source <name>]").
