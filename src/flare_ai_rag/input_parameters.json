@@ -5,7 +5,7 @@
     "retriever_config": {
         "embedding_model": "models/text-embedding-004",
         "vector_size": 768,
-        "collection_name": "docs_collection",
+        "collection_name": "collection_",
         "host": "localhost",
         "port": 6333
     },

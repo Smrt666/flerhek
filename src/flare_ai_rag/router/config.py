@@ -10,6 +10,7 @@ class RouterConfig:
     system_prompt: str
     router_prompt: str
     model: Model
+    code_option: str
     answer_option: str
     clarify_option: str
     reject_option: str
@@ -27,6 +28,7 @@ class RouterConfig:
             system_prompt=ROUTER_INSTRUCTION,
             router_prompt=ROUTER_PROMPT,
             model=model,
+            code_option="CODE",
             answer_option="ANSWER",
             clarify_option="CLARIFY",
             reject_option="REJECT",

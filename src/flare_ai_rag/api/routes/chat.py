@@ -159,13 +159,15 @@ class ChatRouter:
             dict[str, str]: Response containing attestation request
         """
         # Step 1. Classify the user query.
-        prompt, mime_type, schema = self.prompts.get_formatted_prompt("rag_router")
+        prompt, mime_type, schema = self.prompts.get_formatted_prompt(
+            "rag_router", user_input=message
+        )
         classification = self.query_router.route_query(
             prompt=prompt, response_mime_type=mime_type, response_schema=schema
         )
         self.logger.info("Query classified", classification=classification)
 
-        if not classification in ["ANSWER", "CODE", "CLARIFY", "REJECT"]:
+        if not classification in [ "CODE", "ANSWER", "CLARIFY", "REJECT"]:
             self.logger.exception("RAG Routing failed")
             raise ValueError(classification)
 

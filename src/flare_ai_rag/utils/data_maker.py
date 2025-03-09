@@ -74,10 +74,11 @@ def make_data(data_path: Path) -> None:
             logger.exception(f"Error reading document. filename={file.name}")
             continue
 
-    with open("data.json", "w") as f:
+    with open(data_path / "data.json", "w") as f:
         json.dump(data, f, indent=2)
     logger.info("Data written to data.json")
 
 
 if __name__ == "__main__":
-    make_data(Path("../../data"))
+    path = input("Specify path to data.json parent folder: ")
+    make_data(Path(path))

@@ -8,6 +8,8 @@ def get_code_data(file: Path):
 
     r = []
     for item in code:
+        if len(r) > 50:
+            break
         if not "SourceCode" in item:
             continue
         content = item["SourceCode"]

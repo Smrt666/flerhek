@@ -143,8 +143,8 @@ def create_app() -> FastAPI:
     make_data(settings.data_path)
 
     # Load RAG data.
-    docs_data = pd.read_json(settings.data_path / "data.json")
     code_data = pd.json_normalize(get_code_data(settings.data_path / "contracts.json"))
+    docs_data = pd.read_json(settings.data_path / "data.json")
 
     data = pd.concat([docs_data, code_data], ignore_index=True)
     logger.info("Loaded JSON Data.", num_rows=len(data))

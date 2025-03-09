@@ -16,7 +16,7 @@ logger = structlog.get_logger(__name__)
 class GeminiRouter(BaseQueryRouter):
     """
     A simple query router that uses GCloud's Gemini
-    to classify a query as ANSWER, CLARIFY, or REJECT.
+    to classify a query as ANSWER, CODE, CLARIFY, or REJECT.
     """
 
     def __init__(self, client: GeminiProvider, config: RouterConfig) -> None:
@@ -43,6 +43,7 @@ class GeminiRouter(BaseQueryRouter):
             response_mime_type=response_mime_type,
             response_schema=response_schema,
         )
+        logger.debug("Generated respose from query router...", response=response)
         # Parse the response to extract classification.
         classification = (
             parse_gemini_response_as_json(response.raw_response)
@@ -51,6 +52,7 @@ class GeminiRouter(BaseQueryRouter):
         )
         # Validate the classification.
         valid_options = {
+            self.router_config.code_option,
             self.router_config.answer_option,
             self.router_config.clarify_option,
             self.router_config.reject_option,
@@ -64,7 +66,7 @@ class GeminiRouter(BaseQueryRouter):
 class QueryRouter(BaseQueryRouter):
     """
     A simple query router that uses OpenRouter's chat completion endpoint to
-    classify a query as ANSWER, CLARIFY, or REJECT.
+    classify a query as ANSWER, CODE, CLARIFY, or REJECT.
     """
 
     def __init__(self, client: OpenRouterClient, config: RouterConfig) -> None:
@@ -112,6 +114,7 @@ class QueryRouter(BaseQueryRouter):
 
         # Validate the classification.
         valid_options = {
+            self.router_config.code_option,
             self.router_config.answer_option,
             self.router_config.clarify_option,
             self.router_config.reject_option,
