@@ -13,8 +13,9 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
+from flare_ai_rag.bot_manager import start_bot_manager
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
-from flare_ai_rag.api import ChatRouter
+from flare_ai_rag.api import BaseRouter, ChatRouter
 from flare_ai_rag.attestation import Vtpm
 from flare_ai_rag.prompts import PromptService
 from flare_ai_rag.responder import GeminiResponder, ResponderConfig
@@ -171,6 +172,17 @@ def create_app() -> FastAPI:
         attestation=Vtpm(simulate=settings.simulate_attestation),
         prompts=PromptService(),
     )
+    bot_router = BaseRouter(
+        router_name="bot",
+        ai=base_ai,
+        query_router=router_component,
+        retriever=retriever_component,
+        responder=responder_component,
+        attestation=Vtpm(simulate=settings.simulate_attestation),
+        prompts=PromptService(),
+    )
+
+    start_bot_manager(bot_router)
     app.include_router(chat_router.router, prefix="/api/routes/chat", tags=["chat"])
 
     return app
