@@ -193,9 +193,13 @@ class BaseRouter:
         retrieved_docs = self.retriever.semantic_search(
             classification_type, query, top_k=5
         )
-        retrieved_docs_other = self.retriever.semantic_search(
-            other_type, query, top_k=2
-        )
+
+        retrieved_docs_other = []
+        if not classification_type == "answer":
+            retrieved_docs_other = self.retriever.semantic_search(
+                other_type, query, top_k=2
+            )
+
         documents = retrieved_docs + retrieved_docs_other
         self.logger.info("Documents retrieved", documents=documents)
 

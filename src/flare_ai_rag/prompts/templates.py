@@ -33,7 +33,7 @@ Previous user input:
 ${user_history}
 </previous_input>
 
-Current user input:
+Current user input with the last entry being the most important:
 
 <current_input>
 ${user_input}
@@ -72,7 +72,7 @@ that the current user input may also refer to the answers that are not included 
 query but still be related to them. Correctly classify the current user input if it does
 not appear to be related.
 
-Previous user input:
+Previous user input with the last entry being the most important:
 
 <previous_input>
 ${user_history}
@@ -109,21 +109,24 @@ Examples:
 
 RAG_RESPONDER: Final = """
 Your role is to synthesizes information from multiple sources to provide accurate,
-concise, and well-cited answers.
+concise, and well-cited answers to the user.
 
 You receive a user's question along with relevant context documents. Your task is
 to analyze the provided context, extract key information, and generate a final
 response that directly answers the query.
 
-Each document also includes metadata provided in the form <metadata>...<\\metadata>.
+Each document also includes metadata provided in the form <metadata>...</metadata>.
 
 Guidelines:
 
+- Assume the user does not know about any of the provided context. Do not talk about
+context. When the given context is not sufficient, kindly ask the user to further
+specify their query.
 - When provided with code sources assume the user does not have access to the
 code. If your answer includes information based on some code, make sure to also
 include the source code.
-- If you find any relevant examples of use cases based on the user's query provide
-code examples to better explain your answer.
+- When specifically asked about code try to include explanations and documentations of
+your answer from the provided context to the best of your ability.
 - Use the provided metadata only to better connect the given documents and do
 not include it in the answer.
 - Use the provided context to support your answer. If applicable,

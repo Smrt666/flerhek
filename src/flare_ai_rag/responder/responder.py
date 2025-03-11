@@ -37,7 +37,7 @@ class GeminiResponder(BaseResponder):
             prompt += f"Document {identifier}:\n\n{doc.get('text', '')}\n\n"
 
         # Compose the prompt.
-        prompt += "<system>List of previous user queries:</query>\n\n"
+        prompt += "<system>List of previous user queries, with the last being the most important:</query>\n\n"
         prompt += "\n".join(f"- {question}" for question in history) + "\n\n"
         prompt += f"<system>The current user query:</system>\n\n{query}\n\n"
         prompt += f"<system>{self.responder_config.query_prompt}</system>"

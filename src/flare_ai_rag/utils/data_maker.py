@@ -15,7 +15,7 @@ def format_metadata(meta_data: dict) -> str:
     for key in meta_data:
         result += f"{str(key).upper()}: {meta_data[key]}\n"
 
-    return "<metadata>\n" + result + "<\\metadata>\n\n"
+    return "<metadata>\n" + result + "</metadata>\n\n"
 
 
 def metadatadize(func):
@@ -122,6 +122,8 @@ def make_data(data_path: Path) -> None:
             path = source_path / entry_point
             for incl in source.get("include", []):
                 for file in path.rglob(incl):
+                    if any([file.name.endswith(excl.lstrip("*")) for excl in source.get("exclude", [])]):
+                        continue
                     if not file.is_file():
                         continue
                     logger.info(f"Reading file: {file.name}")
