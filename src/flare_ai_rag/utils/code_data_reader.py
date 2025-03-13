@@ -11,7 +11,7 @@ def get_code_data(file: Path, overlap: int = 900) -> list[dict]:
 
     r = []
     for item in code:
-        if len(r) > 50:  # TODO: Remove this
+        if len(r) > 500:  # TODO: Remove this
             break
         if "SourceCode" not in item:
             continue
