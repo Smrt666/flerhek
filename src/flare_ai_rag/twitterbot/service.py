@@ -480,7 +480,9 @@ class TwitterBot:
                 mention_text = f"@{mention.get('screen_name', '')}"
                 clean_text = clean_text.replace(mention_text, "").strip()
 
-            ai_response = await self.router.generate_response(clean_text, f"twitter-{username}")
+            ai_response = await self.router.generate_response(
+                clean_text, f"twitter-{username}"
+            )
             response_text = ai_response["response"]
 
             max_chars = 280

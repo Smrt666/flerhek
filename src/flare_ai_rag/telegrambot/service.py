@@ -402,7 +402,9 @@ class TelegramBot:
 
         try:
             await context.bot.send_chat_action(chat_id=chat_id, action="typing")
-            ai_response = await self.router.generate_response(var_text, f"telegram-{user_id}")
+            ai_response = await self.router.generate_response(
+                var_text, f"telegram-{user_id}"
+            )
             response_text = ai_response["response"]
 
             chat_id_key = int(chat_id) if isinstance(chat_id, str) else chat_id

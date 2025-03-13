@@ -6,6 +6,7 @@ from flare_ai_rag.prompts import PromptService, SemanticRouterResponse
 from flare_ai_rag.responder import GeminiResponder
 from flare_ai_rag.retriever import QdrantRetriever
 from flare_ai_rag.router import GeminiRouter
+from flare_ai_rag.transformer import GeminiTransformer
 
 
 class BaseRouter:
@@ -21,6 +22,7 @@ class BaseRouter:
         router_name: str,
         ai: GeminiProvider,
         query_router: GeminiRouter,
+        transformer: GeminiTransformer,
         retriever: QdrantRetriever,
         responder: GeminiResponder,
         attestation: Vtpm,
@@ -35,6 +37,7 @@ class BaseRouter:
                 to determine if an attestation was requested or if RAG
                 pipeline should be used.
             query_router: RAG Component that classifies the query.
+            transformer: RAG Component that transforms the query.
             retriever: RAG Component that retrieves relevant documents.
             responder: RAG Component that generates a response.
             attestation (Vtpm): Provider for attestation services
@@ -42,6 +45,7 @@ class BaseRouter:
         """
         self.ai = ai
         self.query_router = query_router
+        self.transformer = transformer
         self.retriever = retriever
         self.responder = responder
         self.attestation = attestation
@@ -49,9 +53,7 @@ class BaseRouter:
         self.histories = {}
         self.logger = structlog.get_logger(__name__).bind(router=router_name)
 
-    async def generate_response(
-        self, message: str, user_id: str
-    ) -> dict[str, str]:
+    async def generate_response(self, message: str, user_id: str) -> dict[str, str]:
         """
         Generate a response by feeding the given message through the RAG pipeline.
 
@@ -79,9 +81,7 @@ class BaseRouter:
 
             route = await self.get_semantic_route(message, user_id, history)
             self.logger.info("Query routed", route=route)
-            routed_message = await self.route_message(
-                route, message, user_id, history
-            )
+            routed_message = await self.route_message(route, message, user_id, history)
 
             self.histories[user_id] = history[-20:] + [message]
 
@@ -187,7 +187,13 @@ class BaseRouter:
         other_type = "code" if classification_type == "answer" else "answer"
 
         # Step 2. Construct query for RAG
-        query = "\n\n".join(history) + "\n\n" + message
+        prompt, mime_type, schema = self.prompts.get_formatted_prompt(
+            "rag_transformer", user_input=message, user_history=formatted_history
+        )
+        query, keywords = self.transformer.transform_query(
+            prompt=prompt, response_mime_type=mime_type, response_schema=schema
+        )
+        self.logger.info("Query transformed", transformed=query, keywords=keywords)
 
         # Step 3. Retrieve relevant documents.
         retrieved_docs = self.retriever.semantic_search(
@@ -208,7 +214,9 @@ class BaseRouter:
         self.logger.info("Response generated", answer=answer)
         return {"classification": classification, "response": answer}
 
-    async def handle_attestation(self, _: str, __: str, ___: list[str]) -> dict[str, str]:
+    async def handle_attestation(
+        self, _: str, __: str, ___: list[str]
+    ) -> dict[str, str]:
         """
         Handle attestation requests.
 

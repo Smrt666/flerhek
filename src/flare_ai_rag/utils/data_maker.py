@@ -122,7 +122,12 @@ def make_data(data_path: Path) -> None:
             path = source_path / entry_point
             for incl in source.get("include", []):
                 for file in path.rglob(incl):
-                    if any([file.name.endswith(excl.lstrip("*")) for excl in source.get("exclude", [])]):
+                    if any(
+                        [
+                            file.name.endswith(excl.lstrip("*"))
+                            for excl in source.get("exclude", [])
+                        ]
+                    ):
                         continue
                     if not file.is_file():
                         continue

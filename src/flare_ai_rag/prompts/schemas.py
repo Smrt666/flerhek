@@ -49,6 +49,21 @@ class RAGRouterResponse(TypedDict):
     classification: str
 
 
+class RAGTransformerResponse(TypedDict):
+    """
+    Type definition for transformer response type.
+
+    Defines the required fields for a query transforming operation,
+
+    Attributes:
+        transformed (str): The transformed query
+        keywords (list[str]): The extracted keywords
+    """
+
+    transformed: str
+    keywords: list[str]
+
+
 class PromptInputs(TypedDict, total=False):
     """
     Type definition for various types of prompt inputs.

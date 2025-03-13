@@ -13,15 +13,17 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.bot_manager import start_bot_manager
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
 from flare_ai_rag.api import BaseRouter, ChatRouter
 from flare_ai_rag.attestation import Vtpm
+from flare_ai_rag.bot_manager import start_bot_manager
 from flare_ai_rag.prompts import PromptService
 from flare_ai_rag.responder import GeminiResponder, ResponderConfig
 from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_collection
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
+from flare_ai_rag.transformer import TransformerConfig
+from flare_ai_rag.transformer.transformer import GeminiTransformer
 from flare_ai_rag.utils import load_json
 from flare_ai_rag.utils.code_data_reader import get_code_data
 from flare_ai_rag.utils.data_maker import make_data
@@ -44,6 +46,23 @@ def setup_router(input_config: dict) -> tuple[GeminiProvider, GeminiRouter]:
     gemini_router = GeminiRouter(client=gemini_provider, config=router_config)
 
     return gemini_provider, gemini_router
+
+
+def setup_transformer(input_config: dict) -> GeminiTransformer:
+    """Initialize the transformer."""
+    # Set up Transformer Config.
+    transformer_config = input_config["transformer_config"]
+    transformer_config = TransformerConfig.load(transformer_config)
+
+    # Set up a new Gemini Provider based on Responder Config.
+    gemini_provider = GeminiProvider(
+        api_key=settings.gemini_api_key,
+        model=transformer_config.model.model_id,
+        system_instruction=transformer_config.system_prompt,
+    )
+    return GeminiTransformer(
+        client=gemini_provider, transformer_config=transformer_config
+    )
 
 
 def setup_retriever(
@@ -153,13 +172,16 @@ def create_app() -> FastAPI:
     # Set up the RAG components: 1. Gemini Provider
     base_ai, router_component = setup_router(input_config)
 
-    # 2a. Set up Qdrant client.
+    # 2. Set up the Transformer.
+    transformer_component = setup_transformer(input_config)
+
+    # 3a. Set up Qdrant client.
     qdrant_client = setup_qdrant(input_config)
 
-    # 2b. Set up the Retriever.
+    # 3b. Set up the Retriever.
     retriever_component = setup_retriever(qdrant_client, input_config, data)
 
-    # 3. Set up the Responder.
+    # 4. Set up the Responder.
     responder_component = setup_responder(input_config)
 
     # Create an APIRouter for chat endpoints and initialize ChatRouter.
@@ -167,6 +189,7 @@ def create_app() -> FastAPI:
         router=APIRouter(),
         ai=base_ai,
         query_router=router_component,
+        transformer=transformer_component,
         retriever=retriever_component,
         responder=responder_component,
         attestation=Vtpm(simulate=settings.simulate_attestation),
@@ -176,6 +199,7 @@ def create_app() -> FastAPI:
         router_name="bot",
         ai=base_ai,
         query_router=router_component,
+        transformer=transformer_component,
         retriever=retriever_component,
         responder=responder_component,
         attestation=Vtpm(simulate=settings.simulate_attestation),

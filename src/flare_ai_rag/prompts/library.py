@@ -17,11 +17,13 @@ from flare_ai_rag.prompts.schemas import (
     Prompt,
     RAGRouterResponse,
     SemanticRouterResponse,
+    RAGTransformerResponse,
 )
 from flare_ai_rag.prompts.templates import (
     CONVERSATIONAL,
     RAG_RESPONDER,
     RAG_ROUTER,
+    RAG_TRANSFORMER,
     REMOTE_ATTESTATION,
     SEMANTIC_ROUTER,
 )
@@ -95,6 +97,15 @@ class PromptLibrary:
                 response_mime_type="application/json",
                 response_schema=RAGRouterResponse,
                 category="rag-router",
+            ),
+            Prompt(
+                name="rag_transformer",
+                description="The ",
+                template=RAG_TRANSFORMER,
+                required_inputs=["user_input", "user_history"],
+                response_mime_type="application/json",
+                response_schema=RAGTransformerResponse,
+                category="rag-transformer",
             ),
             Prompt(
                 name="rag_responder",

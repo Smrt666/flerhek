@@ -1,17 +1,17 @@
 import uuid
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field
 
-from flare_ai_rag.api.routes import BaseRouter
-
 from flare_ai_rag.ai import GeminiProvider
-from flare_ai_rag.attestation import Vtpm, VtpmAttestationError
-from flare_ai_rag.prompts import PromptService, SemanticRouterResponse
+from flare_ai_rag.api.routes import BaseRouter
+from flare_ai_rag.attestation import Vtpm
+from flare_ai_rag.prompts import PromptService
 from flare_ai_rag.responder import GeminiResponder
 from flare_ai_rag.retriever import QdrantRetriever
 from flare_ai_rag.router import GeminiRouter
+from flare_ai_rag.transformer import GeminiTransformer
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -41,6 +41,7 @@ class ChatRouter(BaseRouter):
         router: APIRouter,
         ai: GeminiProvider,
         query_router: GeminiRouter,
+        transformer: GeminiTransformer,
         retriever: QdrantRetriever,
         responder: GeminiResponder,
         attestation: Vtpm,
@@ -55,6 +56,7 @@ class ChatRouter(BaseRouter):
                 to determine if an attestation was requested or if RAG
                 pipeline should be used.
             query_router: RAG Component that classifies the query.
+            transformer: RAG Component that transforms the query.
             retriever: RAG Component that retrieves relevant documents.
             responder: RAG Component that generates a response.
             attestation (Vtpm): Provider for attestation services
@@ -65,12 +67,13 @@ class ChatRouter(BaseRouter):
             router_name="char",
             ai=ai,
             query_router=query_router,
+            transformer=transformer,
             retriever=retriever,
             responder=responder,
             attestation=attestation,
-            prompts=prompts
+            prompts=prompts,
         )
-        
+
         self._setup_routes()
 
     def _setup_routes(self) -> None:
@@ -79,7 +82,7 @@ class ChatRouter(BaseRouter):
         """
 
         @self._router.post("/")
-        async def chat( # pyright: ignore [reportUnusedFunction]
+        async def chat(  # pyright: ignore [reportUnusedFunction]
             request: Request, response: Response, message: ChatMessage
         ) -> dict[str, str] | None:
             """

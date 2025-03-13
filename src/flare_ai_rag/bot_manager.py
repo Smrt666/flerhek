@@ -2,14 +2,11 @@ import asyncio
 import contextlib
 import threading
 
-import google.generativeai as genai
 import structlog
 from anyio import Event
-from google.api_core.exceptions import InvalidArgument, NotFound
 
-from flare_ai_rag.ai import BaseAIProvider, GeminiProvider
+from flare_ai_rag.ai import BaseAIProvider
 from flare_ai_rag.api import BaseRouter
-from flare_ai_rag.prompts import FEW_SHOT_PROMPT
 from flare_ai_rag.settings import settings
 from flare_ai_rag.telegrambot import TelegramBot
 from flare_ai_rag.twitterbot import TwitterBot, TwitterConfig
@@ -23,10 +20,7 @@ ERR_AI_PROVIDER_NOT_INITIALIZED = "AI provider must be initialized"
 class BotManager:
     """Manager class for handling multiple social media bots."""
 
-    def __init__(
-        self,
-        router: BaseRouter
-    ) -> None:
+    def __init__(self, router: BaseRouter) -> None:
         """Initialize the BotManager."""
         self.router = router
         self.ai_provider: BaseAIProvider | None = None
@@ -209,12 +203,10 @@ class BotManager:
         logger.info("All bots shutdown completed")
 
 
-async def async_start(
-    router: BaseRouter
-) -> None:
+async def async_start(router: BaseRouter) -> None:
     """
     Initialize and start all components of the application asynchronously.
-    
+
     Args:
         BaseRouter: Router to the RAG pipeline
     """
@@ -250,12 +242,10 @@ async def async_start(
         await bot_manager.shutdown()
 
 
-def start_bot_manager(
-    router: BaseRouter
-) -> None:
+def start_bot_manager(router: BaseRouter) -> None:
     """
     Initialize and start all components of the application.
-    
+
     Args:
         BaseRouter: Router to the RAG pipeline
     """

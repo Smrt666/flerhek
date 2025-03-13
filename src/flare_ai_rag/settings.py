@@ -41,7 +41,9 @@ class Settings(BaseSettings):
     x_api_key_secret: str = ""
     x_access_token: str = ""
     x_access_token_secret: str = ""
-    rapidapi_key: str = "" # get an api key from https://rapidapi.com/davethebeast/api/twitter241
+    rapidapi_key: str = (
+        ""  # get an api key from https://rapidapi.com/davethebeast/api/twitter241
+    )
     rapidapi_host: str = "twitter241.p.rapidapi.com"
     twitter_accounts_to_monitor: str = "@FlareNetworks"
     twitter_polling_interval: int = 60
