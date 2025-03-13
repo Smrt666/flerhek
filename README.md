@@ -200,6 +200,10 @@ gcloud compute instances create $INSTANCE_NAME \
   --metadata=tee-image-reference=$TEE_IMAGE_REFERENCE,\
 tee-container-log-redirect=true,\
 tee-env-GEMINI_API_KEY=$GEMINI_API_KEY,\
+tee-env-ENABLE_TELEGRAM=$ENABLE_TELEGRAM,\
+tee-env-TELEGRAM_API_TOKEN=$TELEGRAM_API_TOKEN,\
+tee-env-TELEGRAM_ALLOWED_USERS=$TELEGRAM_ALLOWED_USERS,\
+tee-env-TELEGRAM_POLLING_INTERVAL=$TELEGRAM_POLLING_INTERVAL,\
   --maintenance-policy=MIGRATE \
   --provisioning-model=STANDARD \
   --service-account=confidential-sa@verifiable-ai-hackathon.iam.gserviceaccount.com \

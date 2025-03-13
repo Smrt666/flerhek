@@ -6,6 +6,8 @@ It sets up CORS middleware, loads configuration and data, and wires together the
 Gemini-based Router, Retriever, and Responder components into a chat endpoint.
 """
 
+from contextlib import asynccontextmanager
+
 import pandas as pd
 import structlog
 import uvicorn
@@ -13,10 +15,10 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
-from flare_ai_rag.bot_manager import start_bot_manager
 from flare_ai_rag.ai import GeminiEmbedding, GeminiProvider
 from flare_ai_rag.api import BaseRouter, ChatRouter
 from flare_ai_rag.attestation import Vtpm
+from flare_ai_rag.bot_manager import start_bot_manager
 from flare_ai_rag.prompts import PromptService
 from flare_ai_rag.responder import GeminiResponder, ResponderConfig
 from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_collection
@@ -110,7 +112,7 @@ def setup_responder(input_config: dict) -> GeminiResponder:
     return GeminiResponder(client=gemini_provider, responder_config=responder_config)
 
 
-def create_app() -> FastAPI:
+def create_app() -> (FastAPI, BaseRouter):
     """
     Create and configure the FastAPI application instance.
 
@@ -125,16 +127,6 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: The configured FastAPI application instance.
     """
-    app = FastAPI(title="RAG Knowledge API", version="1.0", redirect_slashes=False)
-
-    # Optional: configure CORS middleware using settings.
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
     # Load input configuration.
     input_config = load_json(settings.input_path / "input_parameters.json")
@@ -182,7 +174,22 @@ def create_app() -> FastAPI:
         prompts=PromptService(),
     )
 
-    start_bot_manager(bot_router)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        bm = start_bot_manager(bot_router)
+        yield
+        bm.cancel()
+
+    app = FastAPI(title="RAG Knowledge API", version="1.0", redirect_slashes=False, lifespan=lifespan)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     app.include_router(chat_router.router, prefix="/api/routes/chat", tags=["chat"])
 
     return app

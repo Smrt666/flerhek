@@ -1,6 +1,8 @@
 import asyncio
 import contextlib
 import threading
+import typing
+from asyncio import Task
 
 import google.generativeai as genai
 import structlog
@@ -252,7 +254,7 @@ async def async_start(
 
 def start_bot_manager(
     router: BaseRouter
-) -> None:
+) -> Task[typing.Any] | None:
     """
     Initialize and start all components of the application.
     
@@ -260,7 +262,7 @@ def start_bot_manager(
         BaseRouter: Router to the RAG pipeline
     """
     try:
-        asyncio.run(async_start(router))
+        return asyncio.create_task(async_start(router))
     except KeyboardInterrupt:
         logger.info("Application stopped by user")
     except Exception:
