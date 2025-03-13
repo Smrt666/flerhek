@@ -8,7 +8,8 @@ Consider the context for both the previous user input and the current user input
 that the current user input may refer to the previous questions or answers. Understand
 that the current user input may also refer to the answers that are not included in the
 query but still be related to them. Correctly classify the current user input if it does
-not appear to be related.
+not appear to be related. You need to prioritize the current user input over the previous
+user input.
 
 Categories (in order of precedence):
 
@@ -70,7 +71,8 @@ Consider the context for both the previous user input and the current user input
 that the current user input may refer to the previous questions or answers. Understand
 that the current user input may also refer to the answers that are not included in the
 query but still be related to them. Correctly classify the current user input if it does
-not appear to be related.
+not appear to be related. You need to prioritize the current user input over the previous
+user input.
 
 Previous user input with the last entry being the most important:
 
