@@ -187,7 +187,8 @@ class BaseRouter:
         other_type = "code" if classification_type == "answer" else "answer"
 
         # Step 2. Construct query for RAG
-        query = "\n\n".join(history) + "\n\n" + message
+        # query = "\n\n".join(history) + "\n\n" + message
+        query = message
 
         # Step 3. Retrieve relevant documents.
         retrieved_docs = self.retriever.semantic_search(
